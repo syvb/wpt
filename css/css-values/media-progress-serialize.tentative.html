@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<link rel="help" href="https://drafts.csswg.org/css-values-5/#progress">
+<link rel="author" title="sakhapov@chromuim.org">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="../support/serialize-testcommon.js"></script>
+<div id=target></div>
+<script>
+function test_serialization(t,s,c) {
+    test_specified_serialization('opacity', t, s);
+    test_specified_serialization('transform', `scale(${t})`, `scale(${s})`);
+    test_computed_serialization('opacity', t, c);
+    test_computed_serialization('transform', `scale(${t})`, `matrix(${c}, 0, 0, ${c}, 0, 0)`);
+}
+
+test_serialization(
+    'media-progress(width from 0px to 100px)',
+    'media-progress(width from 0px to 100px)',
+    '1',
+);
+test_serialization(
+    'calc(10 * media-progress(height from 10px to 10em))',
+    'calc(10 * media-progress(height from 10px to 10em))',
+    '10',
+);
+test_serialization(
+    'calc(0.5 * media-progress(width from 0px to 100px))',
+    'calc(0.5)',
+    '0.5'
+);
+test_computed_serialization(
+    'width',
+    'calc(1px * media-progress(height from abs(10em - 10rem) to 100px / 10))',
+    '1px',
+);
+</script>
