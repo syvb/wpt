@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta charset="utf-8" />
+  <title></title>
+</head>
+<style>
+  div {
+    margin: 0em;
+    padding: 2em;
+  }
+
+  #source {
+    color: blue;
+    border: 1px solid black;
+  }
+
+  #target {
+    border: 1px solid black;
+  }
+</style>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+
+<script>
+  /** Compare two arrays.*/
+  function checkArrays(arrA, arrB) {
+    if (arrA.length !== arrB.length) return false;
+    for (var i = 0; i < arrA.length; i++) {
+      if (arrA[i] !== arrB[i]) return false;
+    }
+    return true;
+  }
+
+  const fails_in_chromium_reason = "This is expected to fail in chromium: " +
+    "Different values of DataTransfer.dropEffect are observed and is " +
+    "being tracked by crbug http://crbug.com/1470718. " +
+    "Different values of DataTransfer.types is seen due to crbug " +
+    "http://crbug.com/394955. This causes certain File objects to be " +
+    "mapped to text/plain in `DataObject::ToWebDragData()` and thus " +
+    "text/plain is seen in \"dragleave\", \"dragenter\", \"dragover\" and \"drop\" " +
+    "events.While dragend doesn't use WebDragData object and that is why " +
+    "text/plain is not seen in this event.";
+
+  const expected_arr = ["text/plain", "text/html", "Files"];
+
+  const expected_len = 4;
+
+  function dragstart_handler(e) {
+    e.dataTransfer.setData('text/plain', "sample plain data");
+    e.dataTransfer.setData('text/html', 'sample text html');
+    e.dataTransfer.items.add(new File(["h", "e", "l", "l", "o"],
+      "hello.txt"));
+    e.dataTransfer.items.add(new File(["h", "e", "l", "l", "o", "2"],
+      "hello2.txt"));
+  }
+
+  function drop_handler(ev) {
+    ev.preventDefault();
+
+    // Get the id of the target and add the moved element to the target's DOM
+    ev.target.appendChild(document.getElementById("source"));
+    test(() => {
+      let length = ev.dataTransfer.items.length;
+      assert_equals(length, expected_len, fails_in_chromium_reason);
+    }, "Drop Event: Check if DataTransfer.length return correct length");
+
+    test(() => {
+      let types_arr = ev.dataTransfer.types;
+      assert_true(checkArrays(types_arr, expected_arr, fails_in_chromium_reason),
+        'item types should be accessible in drop');
+    }, "Drop Event: Check if DataTransfer.types return correct values");
+  }
+
+  function dragover_handler(ev) {
+    ev.preventDefault();
+    test(() => {
+      let length = ev.dataTransfer.items.length;
+      assert_equals(length, expected_len, fails_in_chromium_reason);
+    }, "DragOver Event: Check if DataTransfer.length return correct length");
+
+    test(() => {
+      let types_arr = ev.dataTransfer.types;
+      assert_true(checkArrays(types_arr, expected_arr, fails_in_chromium_reason),
+        'item types should be accessible in dragover');
+    }, "DragOver Event: Check if DataTransfer.types return correct values");
+  }
+
+  function dragend_handler(ev) {
+    ev.preventDefault();
+    test(() => {
+      let length = ev.dataTransfer.items.length;
+      assert_equals(length, 4);
+    }, "DragEnd Event: Check if DataTransfer.length return correct length");
+
+    test(() => {
+      const arr1 = ["text/plain", "text/html", "Files"];
+      let types_arr = ev.dataTransfer.types;
+      assert_true(checkArrays(types_arr, arr1),
+        'item types should be accessible in dragend');
+    }, "DragEnd Event: Check if DataTransfer.types return correct values");
+  }
+</script>
+
+<body>
+  <div>
+    <p id="source" ondragstart="dragstart_handler(event);" draggable="true">
+      Select this element, drag it to the Drop Zone and then release the selection
+      to move the element.
+    </p>
+  </div>
+  <div id="target" ondrop="drop_handler(event);" ondragover="dragover_handler(event);"
+    ondragend="dragend_handler(event);">
+    Drop Zone
+  </div>
+</body>
+
+</html>
