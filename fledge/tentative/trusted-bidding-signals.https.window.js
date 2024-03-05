@@ -785,3 +785,7 @@ subsetTest(promise_test, async test => {
       auctionConfigOverrides,
       uuid);
 }, 'all-slots-requested-sizes trustedBiddingSignalsSlotSizeMode in a component auction');
+
+/////////////////////////////////////////////////////////////////////////////
+// maxTrustedBiddingSignalsURLLength tests
+/////////////////////////////////////////////////////////////////////////////
