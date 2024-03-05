@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="help" href="https://drafts.csswg.org/css-scroll-snap"/>
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/dom/events/scrolling/scroll_support.js"></script>
+    <script src="/resources/testdriver.js"></script>
+    <script src="/resources/testdriver-actions.js"></script>
+    <script src="/resources/testdriver-vendor.js"></script>
+    <script src="resources/common.js"></script>
+  </head>
+  <body>
+    <style>
+      .scroller {
+        overflow-y: scroll;
+        height: 200px;
+        width: 550px;
+        border: solid 1px black;
+        position: relative;
+        scroll-snap-type: y mandatory;
+      }
+      .placeholder {
+        position: absolute;
+        top: 0px;
+      }
+      .box {
+        background-color: grey;
+        height: 50px;
+        width: 50px;
+        scroll-snap-align: start;
+      }
+      .target {
+        position: absolute;
+        background-color: green;
+        top: 100px;
+      }
+      #target0 {
+        left: 0px;
+      }
+      #target1 {
+        left: 100px;
+      }
+      #target2 {
+        left: 200px;
+      }
+      #target3 {
+        left: 300px;
+      }
+      #target4 {
+        left: 400px;
+      }
+      .space {
+        position: absolute;
+        width: 300vw;
+        height: 300vh;
+        top: 0px;
+      }
+    </style>
+    <div id="scroller" class="scroller">
+      <div class="placeholder box"></div>
+      <div class="target box" id="target0"></div>
+      <div class="target box" id="target1"></div>
+      <div class="target box" id="target2"></div>
+      <div class="target box" id="target3"></div>
+      <div class="target box" id="target4"></div>
+      <div class="space"></div>
+    </div>
+    <script>
+      window.onload = async () => {
+        const boxes = document.querySelectorAll(".target.box");
+        const scroller = document.getElementById("scroller");
+        const box = (n) => {
+          return boxes[n];
+        }
+
+        async function test(n) {
+          return promise_test(async (t) => {
+            await waitForCompositorCommit();
+            assert_equals(scroller.scrollTop, 0, "scroller is snapped to top box");
+
+            const boxn = box(n);
+
+            // Make box the first in tree order.
+            scroller.removeChild(boxn);
+            scroller.prepend(boxn);
+
+            assert_equals(scroller.scrollTop, 0,
+              "scroller is still snapped to top box");
+
+            await runScrollSnapSelectionVerificationTest(t, scroller,
+              /*aligned_elements_x=*/[],
+              /*aligned_elements_y=*/[box(0), box(1), box(2), box(3), box(4)],
+              /*axis=*/"y",
+              /*expected_target_x*/null,
+              /*expected_target_y*/boxn);
+
+          }, `scroller selects box ${n} since it is first in tree order`);
+        }
+
+        await test(4);
+        await test(3);
+        await test(2);
+        await test(1);
+        await test(0);
+      }
+    </script>
+  </body>
+</html>
